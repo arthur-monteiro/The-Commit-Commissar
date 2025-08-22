@@ -10,7 +10,7 @@
 The Commit Commissar integrates your code and perform some tests to ensure everything is still working as expected.
 It uses the [Wolf-Engine 2.0](https://github.com/arthur-monteiro/WolfEngine-2.0).
 
-To set up projects, you need to add a file `config.json` in the `config/` folder. Here an example of the content of the file (use for the Wolf-Engine):
+To set up projects, you need to add a file `config.json` in the `config/` folder. Here an example of the content of the file (used for the Wolf-Engine):
 
 ```
 {
