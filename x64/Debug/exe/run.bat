@@ -1,0 +1,1 @@
+cd "../../../The Commit Commissar" & "../x64/Debug/exe/TheCommitCommissar.exe"
