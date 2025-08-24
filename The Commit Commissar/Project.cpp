@@ -6,6 +6,8 @@
 #include <Debug.h>
 #include <filesystem>
 
+#include "Helper.h"
+
 Project::Project(const std::string& name, const std::string& repoURL, const std::string& sourceBranchName, const std::string& targetBranchName, Wolf::JSONReader::JSONObjectInterface* scenarioObject)
 : m_name(name), m_repoURL(repoURL), m_sourceBranchName(sourceBranchName), m_targetBranchName(targetBranchName)
 {
@@ -65,7 +67,7 @@ Project::MergeResult Project::merge()
 {
     std::string targetCloneFolder = createLocalRepo(m_targetBranchName);
     std::string mergeCmd = "cd " + targetCloneFolder + " & git merge origin/" + m_sourceBranchName + " > mergeResult.txt";
-    if (system(mergeCmd.c_str()) != 0)
+    if (executeCommandWithLogs(mergeCmd) != 0)
         return MergeResult::MERGE_FAILURE;
 
     // Check if merge did something
@@ -83,7 +85,7 @@ Project::MergeResult Project::merge()
     }
 
     std::string pushCmd =  "cd " + targetCloneFolder + " & git push";
-    if (system(pushCmd.c_str()) != 0)
+    if (executeCommandWithLogs(pushCmd) != 0)
         return MergeResult::PUSH_FAILURE;
 
     setUpdatedCheck();
@@ -100,16 +102,16 @@ std::string Project::createLocalRepo(const std::string& branchName) const
     {
         outCloneFolder = "Clones/" + localCloneFolder + "/" + gitFolder;
         std::string updateCmd = "cd " + outCloneFolder + " && git fetch && git pull";
-        system(updateCmd.c_str());
+        executeCommandWithLogs(updateCmd);
     }
     else
     {
         std::string createFolderCmd = "cd Clones & mkdir " + localCloneFolder;
-        system(createFolderCmd.c_str());
+        executeCommandWithLogs(createFolderCmd);
 
         outCloneFolder = "Clones/" + localCloneFolder;
         std::string cloneCmd = "cd " + outCloneFolder + " & git clone -b " + branchName + " " + m_repoURL;
-        system(cloneCmd.c_str());
+        executeCommandWithLogs(cloneCmd);
 
         outCloneFolder += "/" + gitFolder;
     }

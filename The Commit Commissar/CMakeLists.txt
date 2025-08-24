@@ -30,6 +30,9 @@ link_directories("../../Wolf Engine 2.0/Wolf Engine 2.0/ThirdParty/GLFW/lib-vc20
 link_directories("../../Wolf Engine 2.0/Wolf Engine 2.0/ThirdParty/UltraLight/lib")
 link_directories("../x64/Debug")
 
+add_subdirectory(traypp EXCLUDE_FROM_ALL)
+link_libraries(tray)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(TheCommitCommissar ${SRC})

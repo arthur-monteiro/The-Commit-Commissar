@@ -7,7 +7,7 @@
 #include <Debug.h>
 #include <JSONReader.h>
 
-Commissar::Commissar(const std::string& configFilepath)
+Commissar::Commissar(const std::string& configFilepath, Wolf::ResourceNonOwner<TrayManager> tray) : m_tray(tray)
 {
     Wolf::JSONReader::FileReadInfo fileInfo(configFilepath);
     m_configJSONReader.reset(new Wolf::JSONReader(fileInfo));
@@ -24,14 +24,21 @@ Commissar::Commissar(const std::string& configFilepath)
     }
 }
 
-[[noreturn]] void Commissar::run()
+void Commissar::run()
 {
-    while (true)
+    while (!m_stopRequested)
     {
-        std::cout << "----- Starting checks ----- \n\n";
+        m_isSleeping = false;
+
+        Wolf::Debug::sendInfo("----- Starting checks -----");
 
         std::vector<Project*> projectsToUpdate;
         checkForUpdates(projectsToUpdate);
+
+        if (projectsToUpdate.empty())
+        {
+            m_tray->setState(APP_STATE::ALL_GOOD);
+        }
 
         for (Project* project : projectsToUpdate)
         {
@@ -41,47 +48,70 @@ Commissar::Commissar(const std::string& configFilepath)
 
                 if (result != Project::MergeResult::SUCCESS && result != Project::MergeResult::ALREADY_UP_TO_DATE)
                 {
-                    std::cerr << "----- Merge failed ! -----" << std::endl;
+                    Wolf::Debug::sendError("----- Merge failed ! -----");
+
+                    m_tray->setState(APP_STATE::IN_ERROR);
 
                     std::string unused;
                     std::cin >> unused;
                 }
                 else if (result == Project::MergeResult::SUCCESS)
                 {
-                    std::cout << "----- Merge successful -----\n\n";
+                    Wolf::Debug::sendInfo("----- Merge successful -----");
+
+                    m_tray->setState(APP_STATE::ALL_GOOD);
                 }
                 else
                 {
-                    std::cout << "----- Already up to date, no merge has been performed -----\n\n";
+                    Wolf::Debug::sendInfo("----- Already up to date, no merge has been performed -----");
+
+                    m_tray->setState(APP_STATE::ALL_GOOD);
                 }
             }
             else
             {
-                std::cerr << "----- Scenario failed ! -----" << std::endl;
+                Wolf::Debug::sendError("----- Scenario failed ! -----");
+
+                m_tray->setState(APP_STATE::IN_ERROR);
 
                 std::string unused;
                 std::cin >> unused;
             }
         }
 
-        std::cout << "----- No more jobs to do, starting a 10 minutes nap ----- \n\n";
-        std::this_thread::sleep_for(std::chrono::minutes(10));
+        if (!m_stopRequested)
+        {
+            m_isSleeping = true;
+
+            Wolf::Debug::sendInfo("----- No more jobs to do, starting a 10 minutes nap -----");
+            std::this_thread::sleep_for(std::chrono::minutes(10));
+        }
     }
+}
+
+void Commissar::stop()
+{
+    m_stopRequested = true;
+}
+
+bool Commissar::isSleeping() const
+{
+    return m_isSleeping;
 }
 
 void Commissar::checkForUpdates(std::vector<Project*>& outProjects)
 {
     for (Project& project : m_projects)
     {
-        std::cout << "----- Checking " + project.getName() + " ----- \n";
+        Wolf::Debug::sendInfo("----- Checking " + project.getName() + " -----");
         if (project.isOutOfDate())
         {
-            std::cout << "----- Project is out of date ----- \n\n";
+            Wolf::Debug::sendInfo("----- Project is out of date -----");
             outProjects.push_back(&project);
         }
         else
         {
-            std::cout << "----- Project is up to date ----- \n\n";
+            Wolf::Debug::sendInfo("----- Project is up to date -----");
         }
     }
 }
