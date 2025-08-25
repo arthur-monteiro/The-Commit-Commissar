@@ -60,7 +60,12 @@ bool Project::isOutOfDate()
 
 bool Project::executeScenario()
 {
-    return m_scenario->execute();
+    bool result = m_scenario->execute();
+    if (!result)
+    {
+        m_isInError = true;
+    }
+    return result;
 }
 
 Project::MergeResult Project::merge()
@@ -68,12 +73,18 @@ Project::MergeResult Project::merge()
     std::string targetCloneFolder = createLocalRepo(m_targetBranchName);
     std::string mergeCmd = "cd " + targetCloneFolder + " & git merge origin/" + m_sourceBranchName + " > mergeResult.txt";
     if (executeCommandWithLogs(mergeCmd) != 0)
+    {
+        m_isInError = true;
         return MergeResult::MERGE_FAILURE;
+    }
 
     // Check if merge did something
     std::ifstream mergeResultFileInput(targetCloneFolder + "/mergeResult.txt");
     if (!mergeResultFileInput.good())
+    {
+        m_isInError = true;
         return MergeResult::INTERNAL_FAILURE;
+    }
     std::string line;
     std::getline(mergeResultFileInput, line);
     mergeResultFileInput.close();
@@ -86,9 +97,13 @@ Project::MergeResult Project::merge()
 
     std::string pushCmd =  "cd " + targetCloneFolder + " & git push";
     if (executeCommandWithLogs(pushCmd) != 0)
+    {
+        m_isInError = true;
         return MergeResult::PUSH_FAILURE;
+    }
 
     setUpdatedCheck();
+    m_isInError = false;
     return MergeResult::SUCCESS;
 }
 

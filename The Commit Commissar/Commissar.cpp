@@ -42,6 +42,8 @@ void Commissar::run()
 
         for (Project* project : projectsToUpdate)
         {
+            m_tray->setState(APP_STATE::COMMISSAR_WORKING);
+
             if (project->executeScenario())
             {
                 Project::MergeResult result = project->merge();
@@ -49,34 +51,38 @@ void Commissar::run()
                 if (result != Project::MergeResult::SUCCESS && result != Project::MergeResult::ALREADY_UP_TO_DATE)
                 {
                     Wolf::Debug::sendError("----- Merge failed ! -----");
-
-                    m_tray->setState(APP_STATE::IN_ERROR);
-
-                    std::string unused;
-                    std::cin >> unused;
                 }
                 else if (result == Project::MergeResult::SUCCESS)
                 {
                     Wolf::Debug::sendInfo("----- Merge successful -----");
-
-                    m_tray->setState(APP_STATE::ALL_GOOD);
                 }
                 else
                 {
                     Wolf::Debug::sendInfo("----- Already up to date, no merge has been performed -----");
-
-                    m_tray->setState(APP_STATE::ALL_GOOD);
                 }
             }
             else
             {
                 Wolf::Debug::sendError("----- Scenario failed ! -----");
-
-                m_tray->setState(APP_STATE::IN_ERROR);
-
-                std::string unused;
-                std::cin >> unused;
             }
+        }
+
+        bool aProjectIsInError = false;
+        for (const Project& project : m_projects)
+        {
+            if (project.isInError())
+            {
+                aProjectIsInError = true;
+                break;
+            }
+        }
+        if (aProjectIsInError)
+        {
+            m_tray->setState(APP_STATE::IN_ERROR);
+        }
+        else
+        {
+            m_tray->setState(APP_STATE::ALL_GOOD);
         }
 
         if (!m_stopRequested)

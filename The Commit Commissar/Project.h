@@ -19,6 +19,7 @@ public:
     [[nodiscard]] MergeResult merge();
 
     [[nodiscard]] const std::string& getName() { return m_name; };
+    [[nodiscard]] bool isInError() const { return m_isInError;}
 
 private:
     std::string createLocalRepo(const std::string& branchName) const;
@@ -32,4 +33,6 @@ private:
     std::string m_cloneFolder;
     uint64_t m_lastUpdatedTimestamp;
     Wolf::ResourceUniqueOwner<Scenario> m_scenario;
+
+    bool m_isInError = false;
 };
