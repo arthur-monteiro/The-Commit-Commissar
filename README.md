@@ -40,3 +40,10 @@ To set up projects, you need to add a file `config.json` in the `config/` folder
     ]
 }
 ```
+
+## Installation
+
+1. Clone the [Wolf-Engine 2.0](https://github.com/arthur-monteiro/WolfEngine-2.0).
+2. Create an environment variable `WOLF_ENGINE_PATH` with the path of the Wolf Engine
+3. Run `setup_wolf_engine.bat`
+4. I you use visual studio, run `cmake "The Commit Commissar" -G "Visual Studio 17"` 

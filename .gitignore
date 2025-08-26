@@ -367,6 +367,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+Wolf Engine 2.0/
+
 # Commissar generated
 */Clones/*
 */config/*
