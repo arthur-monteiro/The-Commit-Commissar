@@ -62,7 +62,6 @@ int main()
 {
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
 
-
 	Wolf::Debug::setCallback(debugCallback);
 
 	g_tray.reset(new TrayManager());
