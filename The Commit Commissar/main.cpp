@@ -3,10 +3,12 @@
 #include <iostream>
 
 #include <Debug.h>
+#include <Dump.h>
 #include <fstream>
 #include <ResourceUniqueOwner.h>
 
 #include "Commissar.h"
+#include "Dump.h"
 #include "TrayManager.h"
 
 Wolf::ResourceUniqueOwner<TrayManager> g_tray;
@@ -61,6 +63,7 @@ void runCommissar()
 int main()
 {
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
+	SetUnhandledExceptionFilter(Wolf::unhandledExceptionFilter);
 
 	Wolf::Debug::setCallback(debugCallback);
 
