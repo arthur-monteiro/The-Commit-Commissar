@@ -17,8 +17,11 @@ Project::Project(const std::string& name, const std::string& repoURL, const std:
 
 bool Project::isOutOfDate()
 {
+    std::string resetCmd = "cd " + m_cloneFolder + " && git reset --hard HEAD";
+    executeCommandWithLogs(resetCmd);
+
     std::string updateRepoCmd = "cd " + m_cloneFolder + " && git fetch && git pull";
-    system(updateRepoCmd.c_str());
+    executeCommandWithLogs(updateRepoCmd);
 
     std::string cmd = "cd " + m_cloneFolder + " & git log -1 --format=%at";
 
