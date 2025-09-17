@@ -15,10 +15,18 @@ static int executeCommandWithLogs(const std::string& command)
     if (!pipe)
         Wolf::Debug::sendError("Can't execute command");
 
-    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+    try
     {
-        result += buffer.data();
+        while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+        {
+            result += buffer.data();
+        }
     }
+    catch (const std::exception& e)
+    {
+        Wolf::Debug::sendError("Error while getting console result for command: " + command);
+    }
+
 
     Wolf::Debug::sendInfo("Command result: " + result);
 

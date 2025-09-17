@@ -18,10 +18,10 @@ Project::Project(const std::string& name, const std::string& repoURL, const std:
 bool Project::isOutOfDate()
 {
     std::string resetCmd = "cd " + m_cloneFolder + " && git reset --hard HEAD";
-    executeCommandWithLogs(resetCmd);
+    system(resetCmd.c_str());
 
     std::string updateRepoCmd = "cd " + m_cloneFolder + " && git fetch && git pull";
-    executeCommandWithLogs(updateRepoCmd);
+    system(updateRepoCmd.c_str());
 
     std::string cmd = "cd " + m_cloneFolder + " & git log -1 --format=%at";
 
@@ -50,7 +50,14 @@ bool Project::isOutOfDate()
     }
     std::string line;
     std::getline(localLastTimestampFileInput, line);
-    uint64_t lastLocalRefreshTimestamp = std::stoul(line);
+    uint64_t lastLocalRefreshTimestamp = -1;
+    try
+    {
+        lastLocalRefreshTimestamp = std::stoul(line);
+    } catch (const std::exception& e)
+    {
+        Wolf::Debug::sendError("Can't get uint64 from line " + line);
+    }
     localLastTimestampFileInput.close();
 
     if (m_lastUpdatedTimestamp > lastLocalRefreshTimestamp)

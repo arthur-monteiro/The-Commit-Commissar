@@ -10,6 +10,9 @@ public:
     bool execute();
 
 private:
+    std::string computeAbsoluteOrRelativeFullPath(const std::string& pathStr);
+    std::string computeAbsoluteFullPath(const std::string& pathStr);
+
     Wolf::JSONReader::JSONObjectInterface* m_scenarioObject;
     std::string m_cloneFolder;
 };
