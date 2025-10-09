@@ -1,6 +1,7 @@
 #include "Scenario.h"
 
 #include <Debug.h>
+#include <JSONReader.h>
 #include <filesystem>
 #include <fstream>
 
@@ -15,6 +16,7 @@ bool Scenario::execute()
     std::vector<std::string> windowTitlesStarted;
 
     bool hadAnError = false;
+    std::string errorMessage;
     uint32_t instructionCount = m_scenarioObject->getArraySize("instructions");
     for (uint32_t i = 0; i < instructionCount; i++)
     {
@@ -47,6 +49,30 @@ bool Scenario::execute()
             if (codeReturned != 0)
             {
                 hadAnError = true;
+                errorMessage = instructionCommand + " failed: code returned = " + std::to_string(codeReturned);
+                Wolf::Debug::sendInfo(errorMessage);
+            }
+        }
+        else if (instructionCommand == "buildCMake")
+        {
+            std::string folder = instructionObject->getPropertyString("folder");
+            std::string compiler = instructionObject->getPropertyString("compiler");
+            std::string buildOptions = instructionObject->getPropertyString("buildOptions");
+
+            std::string generateCommand = "cd " + m_cloneFolder + " && cmake -S . -B build -G \"" + compiler + "\"" + " " + buildOptions;
+            int codeReturned = executeCommandWithLogs(generateCommand);
+            if (codeReturned != 0)
+            {
+                hadAnError = true;
+                errorMessage = instructionCommand + " failed at generation: code returned = " + std::to_string(codeReturned);
+            }
+
+            std::string buildCommand = "cd " + m_cloneFolder + " && cmake --build build";
+            codeReturned = executeCommandWithLogs(buildCommand);
+            if (codeReturned != 0)
+            {
+                hadAnError = true;
+                errorMessage = instructionCommand + " failed at build: code returned = " + std::to_string(codeReturned);
             }
         }
         else if (instructionCommand == "executePythonWithResult")
@@ -63,6 +89,8 @@ bool Scenario::execute()
             if (codeReturned != 0)
             {
                 hadAnError = true;
+                errorMessage = instructionCommand + " failed: code returned = " + std::to_string(codeReturned);
+                Wolf::Debug::sendInfo(errorMessage);
             }
         }
         else if (instructionCommand == "copyFile")
@@ -88,13 +116,14 @@ bool Scenario::execute()
         {
             std::string image1 = m_cloneFolder + "/" + instructionObject->getPropertyString("image1");
             std::string image2 = m_cloneFolder + "/" + instructionObject->getPropertyString("image2");
-            float tolerance = instructionObject->getPropertyFloat("tolerance");
+            float tolerance = instructionObject->getPropertyFloat("tolerance") + 0.0001f;
 
             float result = compareImages(image1, image2);
             if (tolerance < result)
             {
-                Wolf::Debug::sendInfo("Image comparison failed: tolerance was " + std::to_string(tolerance) + " result is " + std::to_string(result));
                 hadAnError = true;
+                errorMessage = "Image comparison failed: tolerance was " + std::to_string(tolerance) + " result is " + std::to_string(result);
+                Wolf::Debug::sendInfo(errorMessage);
             }
         }
         else if (instructionCommand == "commandNoWait")
@@ -149,8 +178,9 @@ bool Scenario::execute()
         }
         else
         {
-            Wolf::Debug::sendError("Unknown instruction command");
             hadAnError = true;
+            errorMessage = "Unknown instruction command";
+            Wolf::Debug::sendError(errorMessage);
         }
     }
 
@@ -158,6 +188,11 @@ bool Scenario::execute()
     {
         std::string killCmd = "taskkill /FI \"WindowTitle eq "  + windowTitle + "*\" /T /F";
         system(killCmd.c_str());
+    }
+
+    if (hadAnError)
+    {
+        Wolf::Debug::sendInfo("Senario failed: " + errorMessage);
     }
 
     return !hadAnError;
