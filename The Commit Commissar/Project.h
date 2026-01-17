@@ -10,7 +10,8 @@
 class Project
 {
 public:
-    Project(const std::string& name, const std::string& repoPath, const std::string& sourceBranchName, const std::string& targetBranchName, Wolf::JSONReader::JSONObjectInterface* scenarioObject);
+    Project(const std::string& name, const std::string& repoPath, const std::string& sourceBranchName, const std::string& targetBranchName, Wolf::JSONReader::JSONObjectInterface* scenarioObject,
+        const std::function<void()>& reloadOutputJSONCallback);
 
     [[nodiscard]] bool isOutOfDate();
     [[nodiscard]] bool executeScenario();
@@ -20,6 +21,8 @@ public:
 
     [[nodiscard]] const std::string& getName() { return m_name; };
     [[nodiscard]] bool isInError() const { return m_isInError;}
+
+    void outputJSON(std::ofstream& outJSON);
 
 private:
     std::string createLocalRepo(const std::string& branchName) const;

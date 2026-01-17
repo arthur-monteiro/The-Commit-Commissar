@@ -5,10 +5,13 @@
 #include <iostream>
 
 #include <Debug.h>
+#include <fstream>
 #include <JSONReader.h>
 
 Commissar::Commissar(const std::string& configFilepath, Wolf::ResourceNonOwner<TrayManager> tray) : m_tray(tray)
 {
+    m_reloadOutputJSONCallback = [this]() { writeJSON(); };
+
     Wolf::JSONReader::FileReadInfo fileInfo(configFilepath);
     m_configJSONReader.reset(new Wolf::JSONReader(fileInfo));
 
@@ -20,7 +23,7 @@ Commissar::Commissar(const std::string& configFilepath, Wolf::ResourceNonOwner<T
         Wolf::JSONReader::JSONObjectInterface* projectObject = m_configJSONReader->getRoot()->getArrayObjectItem("projects", i);
 
         m_projects.emplace_back(projectObject->getPropertyString("name"), projectObject->getPropertyString("repoURL"), projectObject->getPropertyString("sourceBranchName"),
-            projectObject->getPropertyString("targetBranchName"), projectObject->getPropertyObject("scenario"));
+            projectObject->getPropertyString("targetBranchName"), projectObject->getPropertyObject("scenario"), m_reloadOutputJSONCallback);
     }
 }
 
@@ -120,4 +123,22 @@ void Commissar::checkForUpdates(std::vector<Project*>& outProjects)
             Wolf::Debug::sendInfo("----- Project is up to date -----");
         }
     }
+}
+
+void Commissar::writeJSON()
+{
+    std::ofstream outJSON;
+    outJSON.open("status.json");
+
+    outJSON << "{\n";
+    outJSON << "\t\"projects\": [\n";
+    for (uint32_t i = 0; i < m_projects.size(); ++i)
+    {
+        m_projects[i].outputJSON(outJSON);
+        if (i != m_projects.size() - 1)
+            outJSON << ",\n";
+    }
+    outJSON << "\t]\n}";
+
+    outJSON.close();
 }

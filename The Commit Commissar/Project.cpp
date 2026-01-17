@@ -8,11 +8,12 @@
 
 #include "Helper.h"
 
-Project::Project(const std::string& name, const std::string& repoURL, const std::string& sourceBranchName, const std::string& targetBranchName, Wolf::JSONReader::JSONObjectInterface* scenarioObject)
+Project::Project(const std::string& name, const std::string& repoURL, const std::string& sourceBranchName, const std::string& targetBranchName, Wolf::JSONReader::JSONObjectInterface* scenarioObject,
+    const std::function<void()>& reloadOutputJSONCallback)
 : m_name(name), m_repoURL(repoURL), m_sourceBranchName(sourceBranchName), m_targetBranchName(targetBranchName)
 {
     m_cloneFolder = createLocalRepo(sourceBranchName);
-    m_scenario.reset(new Scenario(scenarioObject, m_cloneFolder));
+    m_scenario.reset(new Scenario(scenarioObject, m_cloneFolder, reloadOutputJSONCallback));
 }
 
 bool Project::isOutOfDate()
@@ -115,6 +116,18 @@ Project::MergeResult Project::merge()
     setUpdatedCheck();
     m_isInError = false;
     return MergeResult::SUCCESS;
+}
+
+void Project::outputJSON(std::ofstream& outJSON)
+{
+    outJSON << "{\n\t\"name\": \"" + m_name + "\",\n";
+    outJSON << "\t\"steps\": [\n";
+    m_scenario->outputStepsJSON(outJSON, 2);
+    outJSON << "\t],\n";
+    outJSON << "\t\"history\": [\n";
+    m_scenario->outputHistoryJSON(outJSON, 2);
+    outJSON << "\t]\n";
+    outJSON << "}";
 }
 
 std::string Project::createLocalRepo(const std::string& branchName) const

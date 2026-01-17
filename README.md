@@ -43,4 +43,19 @@ To set up projects, you need to add a file `config.json` in the `config/` folder
 
 ## Installation
 
-Build with CMake, it will automatically download the right Wolf-Engine version.
+Build with CMake, it will automatically download the right Wolf-Engine version. \
+To start the dashboard, run `python -m http.server 9000`, you can access the dashboard at URL `http://localhost:9000`
+
+## Screenshots
+
+<p align="center">
+  <img src="./Screenshots/dashboard_home.png"  width="1080"/>
+</p>
+
+<p align="center">
+  <img src="./Screenshots/flow.png"  width="1080"/>
+</p>
+
+<p align="center">
+  <img src="./Screenshots/history.png"  width="1080"/>
+</p>

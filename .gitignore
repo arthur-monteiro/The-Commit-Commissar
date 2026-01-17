@@ -368,9 +368,11 @@ MigrationBackup/
 FodyWeavers.xsd
 
 Wolf Engine 2.0/
+*/.idea
 
 # Commissar generated
 */Clones/*
 */config/*
 */logs.txt
 The Commit Commissar/dependencies/wolfenginecontent-src
+The Commit Commissar/status.json

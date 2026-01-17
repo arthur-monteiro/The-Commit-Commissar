@@ -7,21 +7,53 @@
 
 #include "Helper.h"
 
-Scenario::Scenario(Wolf::JSONReader::JSONObjectInterface* scenarioObject, const std::string& cloneFolder) : m_scenarioObject(scenarioObject), m_cloneFolder(cloneFolder)
+Scenario::Scenario(Wolf::JSONReader::JSONObjectInterface* scenarioObject, const std::string& cloneFolder, const std::function<void()>& reloadOutputJSONCallback)
+    : m_scenarioObject(scenarioObject), m_cloneFolder(cloneFolder), m_reloadOutputJSONCallback(reloadOutputJSONCallback)
 {
+    uint32_t instructionCount = m_scenarioObject->getArraySize("instructions");
+    m_stepResults.resize(instructionCount);
+
+    for (uint32_t i = 0; i < instructionCount; i++)
+    {
+        Wolf::JSONReader::JSONObjectInterface* instructionObject = m_scenarioObject->getArrayObjectItem("instructions", i);
+        std::string instructionCommand = instructionObject->getPropertyString("command");
+
+        StepResult& stepResult = m_stepResults[i];
+        stepResult.m_instructionCommand = instructionCommand;
+        stepResult.m_status = Status::NOT_EXECUTED;
+    }
+
+    m_reloadOutputJSONCallback();
 }
 
 bool Scenario::execute()
 {
+    auto startTimer = std::chrono::high_resolution_clock::now();
+
     std::vector<std::string> windowTitlesStarted;
 
     bool hadAnError = false;
     std::string errorMessage;
     uint32_t instructionCount = m_scenarioObject->getArraySize("instructions");
+
+    for (uint32_t i = 0; i < instructionCount; i++)
+    {
+        StepResult& stepResult = m_stepResults[i];
+        stepResult.m_status = Status::NOT_EXECUTED;
+    }
+
+    m_reloadOutputJSONCallback();
+
     for (uint32_t i = 0; i < instructionCount; i++)
     {
         Wolf::JSONReader::JSONObjectInterface* instructionObject = m_scenarioObject->getArrayObjectItem("instructions", i);
         std::string instructionCommand = instructionObject->getPropertyString("command");
+
+        StepResult& stepResult = m_stepResults[i];
+        stepResult.m_instructionCommand = instructionCommand;
+        stepResult.m_status = Status::IN_PROGRESS;
+
+        m_reloadOutputJSONCallback();
 
         if (instructionCommand == "executeWithoutResult")
         {
@@ -182,6 +214,14 @@ bool Scenario::execute()
             errorMessage = "Unknown instruction command";
             Wolf::Debug::sendError(errorMessage);
         }
+
+        stepResult.m_status = hadAnError ? Status::FAILED : Status::SUCCESS;
+        m_reloadOutputJSONCallback();
+
+        if (hadAnError)
+        {
+            break;
+        }
     }
 
     for (const std::string& windowTitle : windowTitlesStarted)
@@ -195,7 +235,81 @@ bool Scenario::execute()
         Wolf::Debug::sendInfo("Senario failed: " + errorMessage);
     }
 
+    auto endTimer = std::chrono::high_resolution_clock::now();
+
+    HistoryResult& historyResult = m_historyResults.emplace_back();
+    historyResult.m_durationInSeconds = std::chrono::duration_cast<std::chrono::seconds>(endTimer - startTimer).count();
+    historyResult.m_endTime = std::chrono::system_clock::now();
+    m_reloadOutputJSONCallback();
+
     return !hadAnError;
+}
+
+void Scenario::outputStepsJSON(std::ofstream& outJSON, uint32_t tabCount) const
+{
+    for (uint32_t stepIdx = 0; stepIdx < m_stepResults.size(); stepIdx++)
+    {
+        const StepResult& stepResult = m_stepResults[stepIdx];
+
+        for (uint32_t i = 0; i < tabCount; i++)
+            outJSON << "\t";
+
+        outJSON << R"({ "instructionCommand": ")" + stepResult.m_instructionCommand + "\", ";
+
+
+        outJSON << R"("status": ")" + computeStatusString(stepResult.m_status) + "\" }";
+
+        if (stepIdx != m_stepResults.size() - 1)
+        {
+            outJSON << ",";
+        }
+        outJSON << "\n";
+    }
+}
+
+std::string formatDuration(uint32_t totalSeconds)
+{
+    if (totalSeconds == 0) return "0s";
+
+    uint32_t minutes = totalSeconds / 60;
+    uint32_t seconds = totalSeconds % 60;
+
+    std::string result = "";
+
+    if (minutes > 0)
+    {
+        result += std::to_string(minutes) + "m ";
+    }
+
+    if (seconds > 0 || totalSeconds < 60)
+    {
+        result += std::to_string(seconds) + "s";
+    }
+
+    if (!result.empty() && result.back() == ' ')
+    {
+        result.pop_back();
+    }
+
+    return result;
+}
+
+void Scenario::outputHistoryJSON(std::ofstream& outJSON, uint32_t tabCount) const
+{
+    for (uint32_t historyIdx = 0; historyIdx < m_historyResults.size(); historyIdx++)
+    {
+        const HistoryResult& historyResult = m_historyResults[historyIdx];
+
+        for (uint32_t i = 0; i < tabCount; i++)
+            outJSON << "\t";
+
+        outJSON << R"({ "time": ")" + std::format("{:%F %T}", std::chrono::floor<std::chrono::seconds>(historyResult.m_endTime));
+        outJSON << R"(", "duration": ")" + formatDuration(historyResult.m_durationInSeconds) + R"(", "result": ")" + computeStatusString(historyResult.m_status) + "\" }";
+
+        if (historyIdx != m_historyResults.size() - 1)
+            outJSON << ",";
+        outJSON << "\n";
+    }
 }
 
 std::string Scenario::computeAbsoluteOrRelativeFullPath(const std::string& pathStr)
@@ -223,4 +337,21 @@ std::string Scenario::computeAbsoluteFullPath(const std::string& pathStr)
         std::u8string currentPath(std::filesystem::current_path().u8string());
         return std::string(currentPath.begin(), currentPath.end()) + "/" + m_cloneFolder + "/" + pathStr;
     }
+}
+
+std::string Scenario::computeStatusString(Status status) const
+{
+    switch (status)
+    {
+        case Status::SUCCESS:
+            return "success";
+        case Status::FAILED:
+            return "failed";
+        case Status::IN_PROGRESS:
+            return "in-progress";
+        case Status::NOT_EXECUTED:
+            return "notExecuted";
+    }
+
+    return "";
 }
