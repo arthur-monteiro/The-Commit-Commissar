@@ -27,7 +27,6 @@ static int executeCommandWithLogs(const std::string& command)
         Wolf::Debug::sendError("Error while getting console result for command: " + command);
     }
 
-
     Wolf::Debug::sendInfo("Command result: " + result);
 
     int returnCode = _pclose(pipe);

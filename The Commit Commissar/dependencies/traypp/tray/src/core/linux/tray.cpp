@@ -1,4 +1,5 @@
 #if defined(__linux__)
+#include <stdexcept>
 #include <core/linux/tray.hpp>
 #include <libappindicator/app-indicator.h>
 #include <stdexcept>
@@ -40,6 +41,20 @@ void Tray::Tray::update()
     if (appIndicator)
     {
         app_indicator_set_menu(appIndicator, reinterpret_cast<GtkMenu *>(construct(entries, this)));
+    }
+}
+
+void Tray::Tray::updateIcon(Icon icon)
+{
+    this->icon = icon;
+
+    if (appIndicator == nullptr)
+    {
+        throw std::runtime_error("appIndicator is nullptr");
+    }
+    else
+    {
+        app_indicator_set_icon_full(appIndicator, this->icon, this->identifier.c_str());
     }
 }
 

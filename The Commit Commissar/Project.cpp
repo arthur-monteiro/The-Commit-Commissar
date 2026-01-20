@@ -25,19 +25,49 @@ bool Project::isOutOfDate()
     system(updateRepoCmd.c_str());
 
     std::string cmd = "cd " + m_cloneFolder + " & git log -1 --format=%at";
-
     std::array<char, 128> buffer;
     std::string result;
+
     FILE* pipe = _popen(cmd.c_str(), "r");
     if (!pipe)
-        Wolf::Debug::sendError("Can't open " + std::string(cmd));
-
-    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
     {
-        result += buffer.data();
+        Wolf::Debug::sendError("Can't open " + std::string(cmd));
+        return false;
     }
 
-    m_lastUpdatedTimestamp = std::stoul(result);
+    try
+    {
+        while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+        {
+            result += buffer.data();
+        }
+    }
+    catch (...)
+    {
+        _pclose(pipe);
+        Wolf::Debug::sendError("An error happened while fetching timestamp");
+        return false;
+    }
+
+    _pclose(pipe);
+
+    if (!result.empty())
+    {
+        try
+        {
+            m_lastUpdatedTimestamp = std::stoul(result);
+        }
+        catch (const std::exception& e)
+        {
+            Wolf::Debug::sendError("Timestamp conversion failed: " + std::string(e.what()));
+            return false;
+        }
+    }
+    else
+    {
+        Wolf::Debug::sendError("Can't get timestamp");
+        return false;
+    }
 
     std::string lastCheckFilePath = m_cloneFolder + "/last_commit_commissar_check.txt";
     std::ifstream localLastTimestampFileInput(lastCheckFilePath);
