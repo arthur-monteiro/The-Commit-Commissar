@@ -28,7 +28,7 @@ bool Project::isOutOfDate()
     std::array<char, 128> buffer;
     std::string result;
 
-    FILE* pipe = _popen(cmd.c_str(), "r");
+    FILE* pipe = POPEN(cmd.c_str(), "r");
     if (!pipe)
     {
         Wolf::Debug::sendError("Can't open " + std::string(cmd));
@@ -44,12 +44,12 @@ bool Project::isOutOfDate()
     }
     catch (...)
     {
-        _pclose(pipe);
+        PCLOSE(pipe);
         Wolf::Debug::sendError("An error happened while fetching timestamp");
         return false;
     }
 
-    _pclose(pipe);
+    PCLOSE(pipe);
 
     if (!result.empty())
     {
@@ -174,11 +174,11 @@ std::string Project::createLocalRepo(const std::string& branchName) const
     }
     else
     {
-        std::string createFolderCmd = "cd Clones & mkdir " + localCloneFolder;
+        std::string createFolderCmd = "cd Clones && mkdir " + localCloneFolder;
         executeCommandWithLogs(createFolderCmd);
 
         outCloneFolder = "Clones/" + localCloneFolder;
-        std::string cloneCmd = "cd " + outCloneFolder + " & git clone -b " + branchName + " " + m_repoURL;
+        std::string cloneCmd = "cd " + outCloneFolder + " && git clone -b " + branchName + " " + m_repoURL;
         executeCommandWithLogs(cloneCmd);
 
         outCloneFolder += "/" + gitFolder;

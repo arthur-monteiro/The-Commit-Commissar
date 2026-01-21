@@ -1,10 +1,11 @@
 #include <chrono>
 #include <ctime>
+#include <fstream>
 #include <iostream>
+#include <thread>
 
 #include <Debug.h>
 #include <Dump.h>
-#include <fstream>
 #include <ResourceUniqueOwner.h>
 
 #include "Commissar.h"
@@ -62,8 +63,10 @@ void runCommissar()
 
 int main()
 {
+#ifdef _WIN32
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
 	SetUnhandledExceptionFilter(Wolf::unhandledExceptionFilter);
+#endif
 
 	Wolf::Debug::setCallback(debugCallback);
 
@@ -71,6 +74,7 @@ int main()
 	g_commissar.reset(new Commissar("config/config.json", g_tray.createNonOwnerResource()));
 
 	std::thread runTrayThread(runTray);
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::thread runCommissarThread(runCommissar);
 
 	runTrayThread.join();

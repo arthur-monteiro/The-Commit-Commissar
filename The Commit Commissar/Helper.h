@@ -5,13 +5,22 @@
 #include <ImageFileLoader.h>
 #include <string>
 
+#ifdef _WIN32
+    #define POPEN _popen
+    #define PCLOSE _pclose
+#else
+    #include <stdio.h>
+    #define POPEN popen
+    #define PCLOSE pclose
+#endif
+
 static int executeCommandWithLogs(const std::string& command)
 {
     Wolf::Debug::sendInfo("Executing command: " + command);
 
     std::array<char, 1024> buffer;
     std::string result;
-    FILE* pipe = _popen(command.c_str(), "r");
+    FILE* pipe = POPEN(command.c_str(), "r");
     if (!pipe)
         Wolf::Debug::sendError("Can't execute command");
 
@@ -29,7 +38,7 @@ static int executeCommandWithLogs(const std::string& command)
 
     Wolf::Debug::sendInfo("Command result: " + result);
 
-    int returnCode = _pclose(pipe);
+    int returnCode = PCLOSE(pipe);
     Wolf::Debug::sendInfo("Command retuned: " + std::to_string(returnCode));
 
     return returnCode;

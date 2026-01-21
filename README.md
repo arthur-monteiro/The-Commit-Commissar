@@ -44,7 +44,9 @@ To set up projects, you need to add a file `config.json` in the `config/` folder
 ## Installation
 
 Build with CMake, it will automatically download the right Wolf-Engine version. \
-To start the dashboard, run `python -m http.server 9000`, you can access the dashboard at URL `http://localhost:9000`
+To start the dashboard, run `python -m http.server 9000`, you can access the dashboard at URL `http://localhost:9000`. \
+\
+On NixOS you can just run `nix-shell`
 
 ## Screenshots
 

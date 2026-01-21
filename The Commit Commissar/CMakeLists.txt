@@ -11,7 +11,7 @@ file(GLOB SRC
 set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 FetchContent_Declare(WolfEngineContent
         GIT_REPOSITORY https://github.com/arthur-monteiro/WolfEngine-2.0
-        GIT_TAG c228e44ca6703368dcf545fab25f35ffd762e052
+        GIT_TAG e05abfa5351b2a1c7648ce2b516bc4a35ef61072
         SOURCE_SUBDIR "__skip_subdirectory__")
 FetchContent_MakeAvailable(WolfEngineContent)
 
@@ -59,15 +59,9 @@ if (RESOURCE_TRACKING OR RESOURCE_DEBUG)
     )
 endif()
 
-target_link_libraries(TheCommitCommissar vulkan-1.lib)
-target_link_libraries(TheCommitCommissar glfw3.lib)
-target_link_libraries(TheCommitCommissar Ultralight.lib)
-target_link_libraries(TheCommitCommissar UltralightCore.lib)
-target_link_libraries(TheCommitCommissar WebCore.lib)
-target_link_libraries(TheCommitCommissar AppCore.lib)
-target_link_libraries(TheCommitCommissar Common.lib)
-target_link_libraries(TheCommitCommissar GraphicAPIBroker.lib)
-target_link_libraries(TheCommitCommissar WolfEngine.lib)
+target_link_libraries(TheCommitCommissar WolfEngine)
+target_link_libraries(TheCommitCommissar GraphicAPIBroker)
+target_link_libraries(TheCommitCommissar Common)
 
 add_dependencies(TheCommitCommissar WolfEngine)
 

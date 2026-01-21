@@ -1,11 +1,9 @@
 #include "Commissar.h"
 
-#include <array>
-#include <complex>
-#include <iostream>
+#include <fstream>
+#include <thread>
 
 #include <Debug.h>
-#include <fstream>
 #include <JSONReader.h>
 
 Commissar::Commissar(const std::string& configFilepath, Wolf::ResourceNonOwner<TrayManager> tray) : m_tray(tray)

@@ -1,9 +1,11 @@
 #include "Scenario.h"
 
-#include <Debug.h>
-#include <JSONReader.h>
 #include <filesystem>
 #include <fstream>
+#include <thread>
+
+#include <Debug.h>
+#include <JSONReader.h>
 
 #include "Helper.h"
 
@@ -240,6 +242,7 @@ bool Scenario::execute()
     HistoryResult& historyResult = m_historyResults.emplace_back();
     historyResult.m_durationInSeconds = std::chrono::duration_cast<std::chrono::seconds>(endTimer - startTimer).count();
     historyResult.m_endTime = std::chrono::system_clock::now();
+    historyResult.m_status = hadAnError ? Status::FAILED : Status::SUCCESS;
     m_reloadOutputJSONCallback();
 
     return !hadAnError;

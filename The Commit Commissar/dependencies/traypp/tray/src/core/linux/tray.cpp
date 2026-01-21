@@ -11,6 +11,7 @@
 #include <components/submenu.hpp>
 #include <components/syncedtoggle.hpp>
 #include <components/toggle.hpp>
+#include <utility>
 
 Tray::Tray::Tray(std::string identifier, Icon icon) : BaseTray(std::move(identifier), std::move(icon))
 {
@@ -46,7 +47,7 @@ void Tray::Tray::update()
 
 void Tray::Tray::updateIcon(Icon icon)
 {
-    this->icon = icon;
+    this->icon = std::move(icon);
 
     if (appIndicator == nullptr)
     {

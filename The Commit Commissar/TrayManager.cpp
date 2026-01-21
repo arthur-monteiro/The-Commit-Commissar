@@ -1,12 +1,19 @@
 #include "TrayManager.h"
 
+#include <filesystem>
+
 TrayManager::TrayManager()
 {
 }
 
 void TrayManager::init()
 {
-    m_tray.reset(new Tray::Tray("The Commit Commissar", "icons/updatingIcon.ico"));
+    std::string iconPath = "icons/updatingIcon.ico";
+#ifdef __linux__
+    iconPath = std::filesystem::absolute(iconPath).string();
+#endif
+
+    m_tray.reset(new Tray::Tray("The Commit Commissar", iconPath));
     m_currentState = APP_STATE::COMMISSAR_WORKING;
 
     m_tray->addEntry(Tray::Button("Exit", [&] { m_tray->exit(); }));
@@ -37,6 +44,10 @@ void TrayManager::updateIcon()
     {
         iconPath = "icons/error.ico";
     }
+
+#ifdef __linux__
+    iconPath = std::filesystem::absolute(iconPath).string();
+#endif
 
     m_tray->updateIcon(iconPath);
 }
