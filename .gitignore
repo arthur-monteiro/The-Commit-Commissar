@@ -368,7 +368,7 @@ MigrationBackup/
 FodyWeavers.xsd
 
 Wolf Engine 2.0/
-*/.idea
+*/.idea/*
 
 # Commissar generated
 */Clones/*

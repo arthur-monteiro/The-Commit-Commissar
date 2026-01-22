@@ -57,34 +57,63 @@ bool Scenario::execute()
 
         m_reloadOutputJSONCallback();
 
-        if (instructionCommand == "executeWithoutResult")
+        if (instructionCommand == "executeWithoutResult" || instructionCommand == "executeWithResult")
         {
             std::string instructionValue = instructionObject->getPropertyString("value");
 
-            std::string cmd = "cd " + m_cloneFolder + " && " + instructionValue + "";
-            if (const size_t lastSlashPos = instructionValue.find_last_of("/"); lastSlashPos != std::string::npos)
+            std::filesystem::path clonePath(m_cloneFolder);
+            std::filesystem::path exeRelativePath(instructionValue);
+            std::filesystem::path absoluteExePath = std::filesystem::absolute(clonePath / exeRelativePath);
+            std::string absoluteExePathStr = absoluteExePath.string();
+
+            std::string cmd;
+#ifdef _WIN32
+            std::string workingDirectoryStr = absoluteExePath.parent_path().string();
+            if (instructionObject->hasProperty("workingDirectory"))
             {
-                cmd = "cd " + m_cloneFolder + " && cd \"" + instructionValue.substr(0, lastSlashPos) + "\" && \"" + instructionValue.substr(lastSlashPos + 1) + "\"";
+                std::filesystem::path workingDirectoryRelativePath(instructionObject->getPropertyString("workingDirectory"));
+                std::filesystem::path workingDirectoryAbsolutePath = std::filesystem::absolute(clonePath / workingDirectoryRelativePath);
+                workingDirectoryStr = workingDirectoryAbsolutePath.string();
+            }
+            cmd += "cd \"" + workingDirectoryStr + "\" && ";
+            cmd += "call \"" + absoluteExePathStr + "\" ";
+
+            if (instructionObject->hasProperty("commandLineArguments"))
+            {
+                cmd += " " + instructionObject->getPropertyString("commandLineArguments");
+            }
+#elif __linux__
+            if (instructionObject->hasProperty("workingDirectory"))
+            {
+                std::string workingDirectory = instructionObject->getPropertyString("workingDirectory");
+                cmd += "(cd \"" + workingDirectory + "\" && \"" + absoluteExePath + "\"";
+            }
+            else
+            {
+                cmd += "\"" + absoluteExePath + "\"";
             }
 
-            executeCommandWithLogs(cmd);
-        }
-        else if (instructionCommand == "executeWithResult")
-        {
-            std::string instructionValue = instructionObject->getPropertyString("value");
-
-            std::string cmd = "cd " + m_cloneFolder + " && \"" + instructionValue + "\"";
-            if (const size_t lastSlashPos = instructionValue.find_last_of("/"); lastSlashPos != std::string::npos)
+            if (instructionObject->hasProperty("commandLineArguments"))
             {
-                cmd = "cd " + m_cloneFolder + " && cd \"" + instructionValue.substr(0, lastSlashPos) + "\" && \"" + instructionValue.substr(lastSlashPos + 1) + "\"";
+                cmd += " " + instructionObject->getPropertyString("commandLineArguments");
             }
+
+            if (instructionObject->hasProperty("workingDirectory"))
+            {
+                cmd += ")";
+            }
+#endif
 
             int codeReturned = executeCommandWithLogs(cmd);
-            if (codeReturned != 0)
+
+            if (instructionCommand == "executeWithResult")
             {
-                hadAnError = true;
-                errorMessage = instructionCommand + " failed: code returned = " + std::to_string(codeReturned);
-                Wolf::Debug::sendInfo(errorMessage);
+                if (codeReturned != 0)
+                {
+                    hadAnError = true;
+                    errorMessage = instructionCommand + " failed: code returned = " + std::to_string(codeReturned);
+                    Wolf::Debug::sendInfo(errorMessage);
+                }
             }
         }
         else if (instructionCommand == "buildCMake")
@@ -93,7 +122,13 @@ bool Scenario::execute()
             std::string compiler = instructionObject->getPropertyString("compiler");
             std::string buildOptions = instructionObject->getPropertyString("buildOptions");
 
-            std::string generateCommand = "cd " + m_cloneFolder + " && cmake -S . -B build -G \"" + compiler + "\"" + " " + buildOptions;
+            std::string goToFolderCmd =  "cd " + m_cloneFolder + " ";
+            if (!folder.empty())
+            {
+                goToFolderCmd += "&& cd \"" + folder + "\" ";
+            }
+
+            std::string generateCommand = goToFolderCmd + "&& cmake -S . -B build -G \"" + compiler + "\"" + " " + buildOptions;
             int codeReturned = executeCommandWithLogs(generateCommand);
             if (codeReturned != 0)
             {
@@ -101,7 +136,7 @@ bool Scenario::execute()
                 errorMessage = instructionCommand + " failed at generation: code returned = " + std::to_string(codeReturned);
             }
 
-            std::string buildCommand = "cd " + m_cloneFolder + " && cmake --build build";
+            std::string buildCommand = goToFolderCmd + "&& cmake --build build";
             codeReturned = executeCommandWithLogs(buildCommand);
             if (codeReturned != 0)
             {
