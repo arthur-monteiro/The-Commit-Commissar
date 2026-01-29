@@ -369,6 +369,7 @@ FodyWeavers.xsd
 
 Wolf Engine 2.0/
 */.idea/*
+*/.android_sdk_mirror/*
 
 # Commissar generated
 */Clones/*
@@ -376,3 +377,4 @@ Wolf Engine 2.0/
 */logs.txt
 The Commit Commissar/dependencies/wolfenginecontent-src
 The Commit Commissar/status.json
+x64/*

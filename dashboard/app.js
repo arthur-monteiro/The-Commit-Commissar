@@ -4,7 +4,7 @@ let lastHash = "";
 
 async function fetchData() {
     try {
-        const response = await fetch('/The Commit Commissar/status.json?t=' + Date.now());
+        const response = await fetch('/The-Commit-Commissar/status.json?t=' + Date.now());
         const data = await response.json();
         
         const currentHash = JSON.stringify(data);

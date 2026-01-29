@@ -1,0 +1,28 @@
+{
+	"projects": [
+{
+	"name": "Wolf Engine",
+	"steps": [
+		{ "instructionCommand": "buildCMake", "status": "success" },
+		{ "instructionCommand": "buildCMake", "status": "success" },
+		{ "instructionCommand": "executeWithResult", "status": "success" },
+		{ "instructionCommand": "compareImages", "status": "success" },
+		{ "instructionCommand": "buildCMake", "status": "success" },
+		{ "instructionCommand": "executeWithResult", "status": "success" },
+		{ "instructionCommand": "compareImages", "status": "success" },
+		{ "instructionCommand": "executeWithResult", "status": "success" },
+		{ "instructionCommand": "copyFolder", "status": "success" },
+		{ "instructionCommand": "executeWithResult", "status": "success" },
+		{ "instructionCommand": "commandNoWait", "status": "success" },
+		{ "instructionCommand": "wait", "status": "success" },
+		{ "instructionCommand": "androidInstallAPK", "status": "success" },
+		{ "instructionCommand": "androidStartApp", "status": "success" },
+		{ "instructionCommand": "wait", "status": "success" },
+		{ "instructionCommand": "androidScreenshot", "status": "success" },
+		{ "instructionCommand": "compareImages", "status": "success" }
+	],
+	"history": [
+		{ "time": "2026-01-29 10:55:00", "duration": "6m 19s", "result": "success" }
+	]
+}	]
+}
